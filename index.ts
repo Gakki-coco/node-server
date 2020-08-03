@@ -6,10 +6,19 @@ import * as url from 'url'
 
 const server = http.createServer()
 const publicDir = p.resolve(__dirname, 'public')
+let cacheAge = 3600 * 24 * 365
 
 server.on('request', (request: IncomingMessage, response: ServerResponse) => {
     const {method, url: path, headers} = request
     const {pathname, search} = url.parse(path)
+
+    if (method !== 'GET') {
+        response.statusCode = 405
+        response.end()
+        return
+    }
+
+
     let filename = pathname.slice(1)
     if (filename === '') {
         filename = 'index.html'
@@ -28,6 +37,7 @@ server.on('request', (request: IncomingMessage, response: ServerResponse) => {
                 response.end('服务器内部错误')
             }
         } else {
+            response.setHeader('Cache-Control', `public, max-age=${cacheAge}`)
             response.end(data)
         }
     })
